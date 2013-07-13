@@ -1,0 +1,18 @@
+{
+	"name": "mrimann/remote-script-verifier",
+	"description": "Supports in verifying the behavior and output of a remote script - used e.g. in a quiz.",
+	"keywords": [
+		"guzzle", "remote", "http", "quiz", "challenge", "response", "test"
+	],
+	"license": "MIT",
+	"authors" : [
+		{
+			"name": "Mario Rimann",
+			"email": "mario.rimann@typo3.org",
+			"homepage": "http://rimann.org/"
+		}
+	],
+	"require": {
+		"guzzle/guzzle": "3.7.x"
+	}
+}
