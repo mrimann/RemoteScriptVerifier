@@ -14,5 +14,10 @@
 	],
 	"require": {
 		"guzzle/guzzle": "3.7.x"
+	},
+	"autoload": {
+		"psr-0": {
+			"Mrimann\\RemoteScriptVerifier": "src/Mrimann/RemoteScriptVerifier"
+		}
 	}
 }
