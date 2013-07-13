@@ -107,5 +107,19 @@ class Verifier {
 		);
 		$this->checkResults->append($checkResult);
 	}
+
+	/**
+	 * Adds a new check result message with a failure status
+	 * @param string $message
+	 */
+	public function addNewFailedResult($message) {
+		$checkResult = new CheckResult(
+			CheckResult::STATUS_FAIL,
+			$message
+		);
+
+		$this->errorCount++;
+		$this->checkResults->append($checkResult);
+	}
 }
 ?>
