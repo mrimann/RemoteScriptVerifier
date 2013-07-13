@@ -65,6 +65,19 @@ class Verifier {
 	}
 
 	/**
+	 * Checks whether all checks passed, by checking the number of errors to be zero
+	 *
+	 * @return boolean true if no single error happened
+	 */
+	public function passedAllTests() {
+		if ($this->errorCount == 0) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+	}
+
+	/**
 	 * Executes an HTTP request (GET) to the remote script.
 	 *
 	 * Note: By default, the Guzzle HTTP Client would throw an exception, in case
