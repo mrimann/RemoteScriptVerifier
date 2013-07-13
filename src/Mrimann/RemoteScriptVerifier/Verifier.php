@@ -86,5 +86,26 @@ class Verifier {
 		return $response;
 	}
 
+	/**
+	 * Returns the check results
+	 *
+	 * @return \ArrayIterator
+	 */
+	public function getCheckResults() {
+		return $this->checkResults;
+	}
+
+	/**
+	 * Adds a new check result message with a positive status
+	 *
+	 * @param string $message
+	 */
+	public function addNewSuccessfulResult($message) {
+		$checkResult = new CheckResult(
+			CheckResult::STATUS_PASS,
+			$message
+		);
+		$this->checkResults->append($checkResult);
+	}
 }
 ?>
