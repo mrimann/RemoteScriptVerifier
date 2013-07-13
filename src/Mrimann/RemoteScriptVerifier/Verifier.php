@@ -56,6 +56,15 @@ class Verifier {
 	}
 
 	/**
+	 * Returns the base URL
+	 *
+	 * @return string the base url
+	 */
+	public function getBaseUrl() {
+		return $this->baseUrl;
+	}
+
+	/**
 	 * Returns the number of errors that occured
 	 *
 	 * @return int the number of errors
