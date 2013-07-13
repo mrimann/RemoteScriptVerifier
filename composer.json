@@ -17,11 +17,7 @@
 	},
 	"autoload": {
 		"psr-0": {
-<<<<<<< HEAD
-			"Mrimann\\RemoteScriptVerifier\\": "src/Mrimann/RemoteScriptVerifier/"
-=======
 			"Mrimann\\RemoteScriptVerifier\\": "src/"
->>>>>>> [BUGFIX] Change autoload path
 		}
 	}
 }
