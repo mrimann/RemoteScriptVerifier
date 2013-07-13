@@ -9,27 +9,27 @@ class Verifier {
 	/**
 	 * @var string the base URL
 	 */
-	var $baseUrl = '';
+	protected  $baseUrl = '';
 
 	/**
 	 * The check results stack
 	 *
 	 * @var \ArrayIterator
 	 */
-	var $checkResults;
+	protected $checkResults;
 
 	/**
 	 * The Number of errors that occurred
 	 * @var int
 	 */
-	var $errorCount = 0;
+	protected $errorCount = 0;
 
 	/**
 	 * The Guzzle HTTP Client object
 	 *
 	 * @var \Guzzle\Http\Client
 	 */
-	var $httpClient;
+	protected $httpClient;
 
 	/**
 	 * The constructor :-)
