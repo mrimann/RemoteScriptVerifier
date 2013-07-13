@@ -17,7 +17,7 @@
 	},
 	"autoload": {
 		"psr-0": {
-			"Mrimann\\RemoteScriptVerifier": "src/Mrimann/RemoteScriptVerifier"
+			"Mrimann\\RemoteScriptVerifier": "src/Mrimann/RemoteScriptVerifier/"
 		}
 	}
 }
