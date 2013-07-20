@@ -8,4 +8,4 @@ This package contains some helper classes to support a special kind of online-ch
 
 ## License
 
-The whole code of this repository is licensed under ther permissive MIT license, see detailed information in the LICENSE file.
+The whole code of this repository is licensed under ther permissive MIT license, see detailed information in the [LICENSE](https://github.com/mrimann/RemoteScriptVerifier/blob/master/LICENSE) file.
