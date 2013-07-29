@@ -12,6 +12,16 @@ class Verifier {
 	protected  $baseUrl = '';
 
 	/**
+	 * @var integer the limit of requests from a given IP
+	 */
+	protected $limitBySourceIp;
+
+	/**
+	 * @var integer the limit of requests for a given URL
+	 */
+	protected $limitByRemoteUrl;
+
+	/**
 	 * The check results stack
 	 *
 	 * @var \ArrayIterator
@@ -39,6 +49,9 @@ class Verifier {
 	public function __construct($url = '') {
 		$this->checkResults = new \ArrayIterator();
 
+		$this->setLimitBySourceIp(100);
+		$this->setLimitByRemoteUrl(100);
+
 		$this->httpClient = new \Guzzle\Http\Client($url);
 		if ($url != '') {
 			$this->baseUrl = $url;
@@ -63,6 +76,35 @@ class Verifier {
 	public function getBaseUrl() {
 		return $this->baseUrl;
 	}
+
+	/**
+	 * @param int $limitBySourceIp
+	 */
+	public function setLimitBySourceIp($limitBySourceIp) {
+		$this->limitBySourceIp = $limitBySourceIp;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getLimitBySourceIp() {
+		return $this->limitBySourceIp;
+	}
+
+	/**
+	 * @param int $limitByRemoteUrl
+	 */
+	public function setLimitByRemoteUrl($limitByRemoteUrl) {
+		$this->limitByRemoteUrl = $limitByRemoteUrl;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getLimitByRemoteUrl() {
+		return $this->limitByRemoteUrl;
+	}
+
 
 	/**
 	 * Returns the number of errors that occured

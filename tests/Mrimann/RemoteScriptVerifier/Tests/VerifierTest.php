@@ -30,6 +30,27 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
+	public function constructorSetsLimitPerSourceIpByDefault() {
+		$this->assertEquals(
+			100,
+			$this->fixture->getLimitBySourceIp()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function constructorSetsLimitPerRemoteUrlByDefault() {
+		$this->assertEquals(
+			100,
+			$this->fixture->getLimitByRemoteUrl()
+		);
+	}
+
+
+	/**
+	 * @test
+	 */
 	public function checkResultsIsEmptyOnFreshVerifier() {
 		$this->assertEquals(
 			0,
@@ -155,6 +176,30 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 			'failed',
 			$this->fixture->getCheckResults()->current()->getMessage()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setLimitBySourceIPSetsTheLimitProperly() {
+		$this->fixture->setLimitBySourceIp(4242);
+
+		$this->assertEquals(
+			4242,
+			$this->fixture->getLimitBySourceIp()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setLimitByRemoteUrlSetsTheLimitProperly() {
+		$this->fixture->setLimitByRemoteUrl(2121);
+
+		$this->assertEquals(
+			2121,
+			$this->fixture->getLimitByRemoteUrl()
 		);
 	}
 
