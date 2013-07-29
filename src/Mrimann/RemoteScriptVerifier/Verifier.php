@@ -103,7 +103,16 @@ class Verifier {
 			array(),
 			array('exceptions' => FALSE)
 		);
-		$response = $request->send();
+		try {
+			$response = $request->send();
+		} catch(\Exception $e) {
+			$this->addNewFailedResult(
+				'Fetching the remote URL failed.'
+			);
+			$response = new \Guzzle\Http\Message\Response(
+				500
+			);
+		}
 
 		return $response;
 	}
