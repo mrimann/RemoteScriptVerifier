@@ -51,6 +51,51 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
+	public function isThrottlingAndLoggingEnabledIsFalseByDefault() {
+		$this->assertFalse(
+			$this->fixture->isThrottlingAndLoggingEnabled()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function enableThrottlingAndLoggingThrowsExceptionIfNoCredentialsAreSetYet() {
+		$this->setExpectedException('\Mrimann\RemoteScriptVerifier\Exception\MissingCredentialsException');
+		$this->fixture->enableThrottlingAndLogging();
+	}
+
+	/**
+	 * @test
+	 */
+	public function enableThrottlingAndLoggingDoesNotThrowExceptionIfCredentialsAreSetYet() {
+		$this->fixture->setDatabaseUser('foo');
+		$this->fixture->setDatabasePassword('bar');
+		$this->fixture->setDatabaseHost('localhost');
+		$this->fixture->setDatabaseName('quiz');
+
+		$this->fixture->enableThrottlingAndLogging();
+	}
+
+	/**
+	 * @test
+	 */
+	public function isThrottlingAndLoggingEnabledReturnsTrueAfterEnablingIt() {
+		$this->fixture->setDatabaseUser('foo');
+		$this->fixture->setDatabasePassword('bar');
+		$this->fixture->setDatabaseHost('localhost');
+		$this->fixture->setDatabaseName('quiz');
+
+		$this->fixture->enableThrottlingAndLogging();
+
+		$this->assertTrue(
+			$this->fixture->isThrottlingAndLoggingEnabled()
+		);
+	}
+
+	/**
+	 * @test
+	 */
 	public function checkResultsIsEmptyOnFreshVerifier() {
 		$this->assertEquals(
 			0,
@@ -200,6 +245,50 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 			2121,
 			$this->fixture->getLimitByRemoteUrl()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setDatabaseUserSetsDatabaseUser() {
+		$this->fixture->setDatabaseUser('foo');
+		$this->assertEquals(
+			'foo',
+			$this->fixture->getDatabaseUser()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setDatabaseUserSetsDatabasePassword() {
+		$this->fixture->setDatabasePassword('bar');
+		$this->assertEquals(
+			'bar',
+			$this->fixture->getDatabasePassword()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setDatabaseUserSetsDatabaseHost() {
+		$this->fixture->setDatabaseHost('localhost');
+		$this->assertEquals(
+			'localhost',
+			$this->fixture->getDatabaseHost()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function setDatabaseUserSetsDatabaseName() {
+		$this->fixture->setDatabaseName('quiz');
+		$this->assertEquals(
+			'quiz',
+			$this->fixture->getDatabaseName()
 		);
 	}
 

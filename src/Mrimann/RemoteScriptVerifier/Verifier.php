@@ -9,7 +9,32 @@ class Verifier {
 	/**
 	 * @var string the base URL
 	 */
-	protected  $baseUrl = '';
+	protected $baseUrl = '';
+
+	/**
+	 * @var boolean whether logging and throttling is enabled
+	 */
+	protected $isThrottlingAndLoggingEnabled;
+
+	/**
+	 * @var string the database user
+	 */
+	protected $databaseUser;
+
+	/**
+	 * @var string the database password
+	 */
+	protected $databasePassword;
+
+	/**
+	 * @var string the host on which the database runs
+	 */
+	protected $databaseHost;
+
+	/**
+	 * @var string the database name
+	 */
+	protected $databaseName;
 
 	/**
 	 * @var integer the limit of requests from a given IP
@@ -48,6 +73,7 @@ class Verifier {
 	 */
 	public function __construct($url = '') {
 		$this->checkResults = new \ArrayIterator();
+		$this->isThrottlingAndLoggingEnabled = FALSE;
 
 		$this->setLimitBySourceIp(100);
 		$this->setLimitByRemoteUrl(100);
@@ -55,6 +81,37 @@ class Verifier {
 		$this->httpClient = new \Guzzle\Http\Client($url);
 		if ($url != '') {
 			$this->baseUrl = $url;
+		}
+	}
+
+	/**
+	 * Checks whether logging and throttling is enabled at all
+	 *
+	 * @return bool TRUE if logging and throttling is enabled, false otherwise
+	 */
+	public function isThrottlingAndLoggingEnabled() {
+		return $this->isThrottlingAndLoggingEnabled;
+	}
+
+	/**
+	 * Checks if the pre-requisites are given, then enables the throttling and
+	 * logging functionality.
+	 *
+	 * @throws Exception\MissingCredentialsException
+	 * @return void
+	 */
+	public function enableThrottlingAndLogging() {
+		if (
+			$this->databaseHost != ''
+			&& $this->databaseName != ''
+			&& $this->databaseUser != ''
+			&& $this->databasePassword != ''
+		) {
+			$this->isThrottlingAndLoggingEnabled = TRUE;
+		} else {
+			throw new \Mrimann\RemoteScriptVerifier\Exception\MissingCredentialsException(
+				'Missing Credentials for the Database.'
+			);
 		}
 	}
 
@@ -193,6 +250,62 @@ class Verifier {
 
 		$this->errorCount++;
 		$this->checkResults->append($checkResult);
+	}
+
+	/**
+	 * @param string $databaseHost
+	 */
+	public function setDatabaseHost($databaseHost) {
+		$this->databaseHost = $databaseHost;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDatabaseHost() {
+		return $this->databaseHost;
+	}
+
+	/**
+	 * @param string $databaseName
+	 */
+	public function setDatabaseName($databaseName) {
+		$this->databaseName = $databaseName;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDatabaseName() {
+		return $this->databaseName;
+	}
+
+	/**
+	 * @param string $databasePassword
+	 */
+	public function setDatabasePassword($databasePassword) {
+		$this->databasePassword = $databasePassword;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDatabasePassword() {
+		return $this->databasePassword;
+	}
+
+	/**
+	 * @param string $databaseUser
+	 */
+	public function setDatabaseUser($databaseUser) {
+		$this->databaseUser = $databaseUser;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDatabaseUser() {
+		return $this->databaseUser;
 	}
 }
 ?>
