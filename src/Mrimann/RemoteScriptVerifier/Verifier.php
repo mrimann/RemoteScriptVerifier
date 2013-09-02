@@ -145,13 +145,15 @@ class Verifier {
 		if ($ipCount > $this->getLimitBySourceIp()
 			|| $remoteUrlCount > $this->getLimitByRemoteUrl()) {
 			$this->addNewFailedResult('Throttling in effect, please try later...');
+			$status = 'fail';
 		} else {
 			$this->addNewSuccessfulResult('You still operate within the regular limitations, go on.');
+			$status = 'pass';
 		}
 
 		$now = new \DateTime();
 		$db->query('INSERT INTO logging SET source_ip="' . $db->escape_string($sourceIpAddress) .
-			'", remote_url="' . $db->escape_string($remoteUrl) . '", timestamp="' . $now->format('Y-m-d H:i:s') . '";');
+			'", remote_url="' . $db->escape_string($remoteUrl) . '", timestamp="' . $now->format('Y-m-d H:i:s') . '", status="' . $status . '";');
 	}
 
 	/**

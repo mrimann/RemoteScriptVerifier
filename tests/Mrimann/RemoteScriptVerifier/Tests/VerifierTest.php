@@ -315,6 +315,50 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
+	public function checkRequestAgainstThrottlingLimitsAddsCorrectEntryInTheLogTableOnPass() {
+		$db = $this->enableTestDatabase();
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org/'
+		);
+
+		$dbResult = $db->query('SELECT status FROM logging where source_ip="127.0.0.1" LIMIT 1;')->fetch_assoc();
+
+		$this->assertEquals(
+			'pass',
+			$dbResult['status']
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function checkRequestAgainstThrottlingLimitsAddsCorrectEntryInTheLogTableOnFail() {
+		$db = $this->enableTestDatabase();
+
+		$this->fixture->setLimitBySourceIp(0);
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org/'
+		);
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org/'
+		);
+
+		$dbResult = $db->query('SELECT status FROM logging where source_ip="127.0.0.1" LIMIT 1,1;')->fetch_assoc();
+
+		$this->assertEquals(
+			'fail',
+			$dbResult['status']
+		);
+	}
+
+	/**
+	 * @test
+	 */
 	public function setLimitBySourceIPSetsTheLimitProperly() {
 		$this->fixture->setLimitBySourceIp(4242);
 
@@ -392,6 +436,11 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 		);
 	}
 
+	/**
+	 * Initializes the database connection - only for testing purpose of course...
+	 *
+	 * @return \mysqli a connected instance
+	 */
 	protected function enableTestDatabase() {
 		$this->fixture->setDatabaseHost('127.0.0.1');
 		$this->fixture->setDatabaseUser('travis');
@@ -402,6 +451,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 			'127.0.0.1', 'travis', 'travis', 'scriptverifier'
 		);
 		$db->query('TRUNCATE TABLE logging;');
+
+		return $db;
 	}
 
 }
