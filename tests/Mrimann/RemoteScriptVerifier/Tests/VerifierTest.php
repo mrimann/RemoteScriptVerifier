@@ -227,6 +227,94 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
+	public function checkRequestAgainstThrottlingLimitsAddsSuccessfulCheckResultIfEverythingIsOk() {
+		$this->enableTestDatabase();
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+
+		$this->assertEquals(
+			1,
+			$this->fixture->getCheckResults()->count()
+		);
+
+		$this->assertEquals(
+			'pass',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function checkRequestAgainstThrottlingLimitsAddsFailedCheckResultIfIpLimitIsReached() {
+		$this->enableTestDatabase();
+
+		$this->fixture->setLimitBySourceIp(0);
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+
+		$this->assertEquals(
+			2,
+			$this->fixture->getCheckResults()->count()
+		);
+
+		$this->assertEquals(
+			'pass',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+		$this->fixture->getCheckResults()->next();
+		$this->assertEquals(
+			'fail',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function checkRequestAgainstThrottlingLimitsAddsFailedCheckResultIfRemoteUrlLimitIsReached() {
+		$this->enableTestDatabase();
+
+		$this->fixture->setLimitByRemoteUrl(0);
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+
+		$this->assertEquals(
+			2,
+			$this->fixture->getCheckResults()->count()
+		);
+
+		$this->assertEquals(
+			'pass',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+		$this->fixture->getCheckResults()->next();
+		$this->assertEquals(
+			'fail',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+	}
+
+	/**
+	 * @test
+	 */
 	public function setLimitBySourceIPSetsTheLimitProperly() {
 		$this->fixture->setLimitBySourceIp(4242);
 
@@ -302,6 +390,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 		$this->fixture->addNewFailedResult(
 			'failed'
 		);
+	}
+
+	protected function enableTestDatabase() {
+		$this->fixture->setDatabaseHost('127.0.0.1');
+		$this->fixture->setDatabaseUser('travis');
+		$this->fixture->setDatabasePassword('travis');
+		$this->fixture->setDatabaseName('scriptverifier');
+
+		$db = new \mysqli(
+			'127.0.0.1', 'travis', 'travis', 'scriptverifier'
+		);
+		$db->query('TRUNCATE TABLE logging;');
 	}
 
 }

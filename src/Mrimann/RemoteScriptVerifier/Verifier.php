@@ -116,6 +116,45 @@ class Verifier {
 	}
 
 	/**
+	 * Checks if the request from a given IP address to a certain remote URL is
+	 * allowed to be executed (or if it violates any given limitation).
+	 *
+	 * The check result is then being logged to the database.
+	 *
+	 * @param string the IP address of the requestor
+	 * @param string the remote URL requested to be retrieved
+	 */
+	public function checkRequestAgainstThrottlingLimits($sourceIpAddress, $remoteUrl) {
+		// get the counters from the database
+		$db = new \mysqli(
+			$this->databaseHost,
+			$this->databaseUser,
+			$this->databasePassword,
+			$this->databaseName
+		);
+		if ($db->connect_errno) {
+			echo "Failed to connect to MySQL: (" . $db->connect_errno . ") " . $db->connect_error;
+		}
+
+		$ipRes = $db->query('SELECT COUNT(*) as count FROM logging WHERE source_ip = "' . $db->escape_string($sourceIpAddress) . '"')->fetch_assoc();
+		$ipCount = (int)$ipRes['count'];
+		$remoteUrlRes = $db->query('SELECT COUNT(*) as count FROM logging WHERE remote_url ="' . $db->escape_string($remoteUrl) . '"')->fetch_assoc();
+		$remoteUrlCount = (int)$remoteUrlRes['count'];
+
+		// check them against the set limits
+		if ($ipCount > $this->getLimitBySourceIp()
+			|| $remoteUrlCount > $this->getLimitByRemoteUrl()) {
+			$this->addNewFailedResult('Throttling in effect, please try later...');
+		} else {
+			$this->addNewSuccessfulResult('You still operate within the regular limitations, go on.');
+		}
+
+		$now = new \DateTime();
+		$db->query('INSERT INTO logging SET source_ip="' . $db->escape_string($sourceIpAddress) .
+			'", remote_url="' . $db->escape_string($remoteUrl) . '", timestamp="' . $now->format('Y-m-d H:i:s') . '";');
+	}
+
+	/**
 	 * Stores the base URL
 	 *
 	 * @param string $url the URL to the remote script
