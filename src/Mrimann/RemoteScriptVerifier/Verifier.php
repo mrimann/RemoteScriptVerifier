@@ -67,6 +67,13 @@ class Verifier {
 	protected $httpClient;
 
 	/**
+	 * The databse connection
+	 *
+	 * @var \mysqli
+	 */
+	protected $db;
+
+	/**
 	 * The constructor :-)
 	 *
 	 * @param string $url the base Url, optional
@@ -101,18 +108,46 @@ class Verifier {
 	 * @return void
 	 */
 	public function enableThrottlingAndLogging() {
+		if ($this->verifyDatabaseConnection()) {
+			$this->isThrottlingAndLoggingEnabled = TRUE;
+		}
+	}
+
+	/**
+	 * Checks if the given DB credentials are correct, by trying to connect
+	 * to the database.
+	 *
+	 * @return boolean TRUE if the database connection was successful, FALSE otherwise
+	 */
+	public function verifyDatabaseConnection() {
+		$result = FALSE;
+
 		if (
 			$this->databaseHost != ''
 			&& $this->databaseName != ''
 			&& $this->databaseUser != ''
 			&& $this->databasePassword != ''
 		) {
-			$this->isThrottlingAndLoggingEnabled = TRUE;
+			// connect to the database
+			@$db = new \mysqli(
+				$this->databaseHost,
+				$this->databaseUser,
+				$this->databasePassword,
+				$this->databaseName
+			);
+			if ($db->connect_errno) {
+				$this->addNewFailedResult('There seems to be some troubles with the database. Please try again later...');
+			} else {
+				$this->db = $db;
+				$result = TRUE;
+			}
 		} else {
 			throw new \Mrimann\RemoteScriptVerifier\Exception\MissingCredentialsException(
 				'Missing Credentials for the Database.'
 			);
 		}
+
+		return $result;
 	}
 
 	/**
@@ -123,22 +158,15 @@ class Verifier {
 	 *
 	 * @param string the IP address of the requestor
 	 * @param string the remote URL requested to be retrieved
+	 * @param boolean whether to be verbose, defaults to FALSE
 	 */
-	public function checkRequestAgainstThrottlingLimits($sourceIpAddress, $remoteUrl) {
-		// get the counters from the database
-		$db = new \mysqli(
-			$this->databaseHost,
-			$this->databaseUser,
-			$this->databasePassword,
-			$this->databaseName
-		);
-		if ($db->connect_errno) {
-			echo "Failed to connect to MySQL: (" . $db->connect_errno . ") " . $db->connect_error;
-		}
+	public function checkRequestAgainstThrottlingLimits($sourceIpAddress, $remoteUrl, $beVerbose = FALSE) {
+		$dateLimit = new \DateTime('-1 hour');
 
-		$ipRes = $db->query('SELECT COUNT(*) as count FROM logging WHERE source_ip = "' . $db->escape_string($sourceIpAddress) . '"')->fetch_assoc();
+		$ipRes = $this->db->query('SELECT COUNT(*) as count FROM logging WHERE timestamp > "' . $dateLimit->format('Y-m-d H:i:s') . '" AND source_ip = "' . $this->db->escape_string($sourceIpAddress) . '"')->fetch_assoc();
 		$ipCount = (int)$ipRes['count'];
-		$remoteUrlRes = $db->query('SELECT COUNT(*) as count FROM logging WHERE remote_url ="' . $db->escape_string($remoteUrl) . '"')->fetch_assoc();
+
+		$remoteUrlRes = $this->db->query('SELECT COUNT(*) as count FROM logging WHERE timestamp > "' . $dateLimit->format('Y-m-d H:i:s') . '" AND remote_url ="' . $this->db->escape_string($remoteUrl) . '"')->fetch_assoc();
 		$remoteUrlCount = (int)$remoteUrlRes['count'];
 
 		// check them against the set limits
@@ -147,13 +175,15 @@ class Verifier {
 			$this->addNewFailedResult('Throttling in effect, please try later...');
 			$status = 'fail';
 		} else {
-			$this->addNewSuccessfulResult('You still operate within the regular limitations, go on.');
+			if ($beVerbose == TRUE) {
+				$this->addNewSuccessfulResult('You still operate within the regular limitations, go on.');
+			}
 			$status = 'pass';
 		}
 
 		$now = new \DateTime();
-		$db->query('INSERT INTO logging SET source_ip="' . $db->escape_string($sourceIpAddress) .
-			'", remote_url="' . $db->escape_string($remoteUrl) . '", timestamp="' . $now->format('Y-m-d H:i:s') . '", status="' . $status . '";');
+		$this->db->query('INSERT INTO logging SET source_ip="' . $this->db->escape_string($sourceIpAddress) .
+			'", remote_url="' . $this->db->escape_string($remoteUrl) . '", timestamp="' . $now->format('Y-m-d H:i:s') . '", status="' . $status . '";');
 	}
 
 	/**

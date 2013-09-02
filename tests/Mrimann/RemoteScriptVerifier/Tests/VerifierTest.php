@@ -60,31 +60,31 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
-	public function enableThrottlingAndLoggingThrowsExceptionIfNoCredentialsAreSetYet() {
+	public function verifyDatabaseConnectionThrowsExceptionIfNoCredentialsAreSetYet() {
 		$this->setExpectedException('\Mrimann\RemoteScriptVerifier\Exception\MissingCredentialsException');
-		$this->fixture->enableThrottlingAndLogging();
+		$this->fixture->verifyDatabaseConnection();
 	}
 
 	/**
 	 * @test
 	 */
-	public function enableThrottlingAndLoggingDoesNotThrowExceptionIfCredentialsAreSetYet() {
+	public function verifyDatabaseConnectionDoesNotThrowExceptionIfCredentialsAreSetYet() {
 		$this->fixture->setDatabaseUser('foo');
 		$this->fixture->setDatabasePassword('bar');
 		$this->fixture->setDatabaseHost('localhost');
 		$this->fixture->setDatabaseName('quiz');
 
-		$this->fixture->enableThrottlingAndLogging();
+		$this->fixture->verifyDatabaseConnection();
 	}
 
 	/**
 	 * @test
 	 */
-	public function isThrottlingAndLoggingEnabledReturnsTrueAfterEnablingIt() {
-		$this->fixture->setDatabaseUser('foo');
-		$this->fixture->setDatabasePassword('bar');
+	public function isThrottlingAndLoggingEnabledReturnsTrueAfterEnablingItWidthCorrectCredentials() {
+		$this->fixture->setDatabaseUser('travis');
+		$this->fixture->setDatabasePassword('travis');
 		$this->fixture->setDatabaseHost('localhost');
-		$this->fixture->setDatabaseName('quiz');
+		$this->fixture->setDatabaseName('scriptverifier');
 
 		$this->fixture->enableThrottlingAndLogging();
 
@@ -227,12 +227,30 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
-	public function checkRequestAgainstThrottlingLimitsAddsSuccessfulCheckResultIfEverythingIsOk() {
+	public function checkRequestAgainstThrottlingLimitsDoesNotAddSuccessfulCheckResultIfEverythingIsOkByDefault() {
 		$this->enableTestDatabase();
 
 		$this->fixture->checkRequestAgainstThrottlingLimits(
 			'127.0.0.1',
 			'http://www.example.org'
+		);
+
+		$this->assertEquals(
+			0,
+			$this->fixture->getCheckResults()->count()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function checkRequestAgainstThrottlingLimitsAddsSuccessfulCheckResultIfEverythingIsOkAndVerbosityEnabled() {
+		$this->enableTestDatabase();
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org',
+			TRUE
 		);
 
 		$this->assertEquals(
@@ -256,7 +274,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 
 		$this->fixture->checkRequestAgainstThrottlingLimits(
 			'127.0.0.1',
-			'http://www.example.org'
+			'http://www.example.org',
+			TRUE
 		);
 		$this->fixture->checkRequestAgainstThrottlingLimits(
 			'127.0.0.1',
@@ -289,7 +308,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 
 		$this->fixture->checkRequestAgainstThrottlingLimits(
 			'127.0.0.1',
-			'http://www.example.org'
+			'http://www.example.org',
+			TRUE
 		);
 		$this->fixture->checkRequestAgainstThrottlingLimits(
 			'127.0.0.1',
@@ -355,6 +375,71 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 			$dbResult['status']
 		);
 	}
+
+	/**
+	 * @test
+	 */
+	public function checkRequestAgainstThrottlingLimitsChecksOnlyAgainstRecordsOfThePreviousHours() {
+		$db = $this->enableTestDatabase();
+		$twoHoursAgo = new \DateTime('-2 hours');
+
+		$db->query('INSERT INTO logging SET source_ip="127.0.0.1", remote_url="http://www.example.org/", timestamp="' . $twoHoursAgo->format('Y-m-d H:i:s') . '", status="pass";');
+
+
+		$this->fixture->setLimitBySourceIp(0);
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org/',
+			TRUE
+		);
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org/'
+		);
+
+
+		$this->assertEquals(
+			2,
+			$this->fixture->getCheckResults()->count()
+		);
+
+		$this->assertEquals(
+			'pass',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+		$this->fixture->getCheckResults()->next();
+		$this->assertEquals(
+			'fail',
+			$this->fixture->getCheckResults()->current()->getStatus()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function verifyDatabaseConnectionReturnsTrueOnSuccessfulConnect() {
+		$this->enableTestDatabase();
+
+		$this->assertTrue(
+			$this->fixture->verifyDatabaseConnection()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function verifyDatabaseConnectionReturnsFalseOnFailedConnect() {
+		$this->fixture->setDatabaseHost('127.0.0.1');
+		$this->fixture->setDatabaseName('foobar');
+		$this->fixture->setDatabaseUser('foobar');
+		$this->fixture->setDatabasePassword('lorem');
+
+		$this->assertFalse(
+			$this->fixture->verifyDatabaseConnection()
+		);
+	}
+
 
 	/**
 	 * @test
@@ -447,6 +532,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 		$this->fixture->setDatabasePassword('travis');
 		$this->fixture->setDatabaseName('scriptverifier');
 
+		$this->fixture->enableThrottlingAndLogging();
+
 		$db = new \mysqli(
 			'127.0.0.1', 'travis', 'travis', 'scriptverifier'
 		);
@@ -454,5 +541,4 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 
 		return $db;
 	}
-
 }
