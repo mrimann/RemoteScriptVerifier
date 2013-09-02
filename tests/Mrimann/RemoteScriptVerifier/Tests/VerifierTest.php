@@ -335,6 +335,41 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 	/**
 	 * @test
 	 */
+	public function checkRequestAgainstThrottlingLimitsStoresTheSourceIpAddress() {
+		$this->enableTestDatabase();
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+
+		$this->assertEquals(
+			'127.0.0.1',
+			$this->fixture->getSourceIpAddress()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function checkRequestAgainstThrottlingLimitsStoresTheRemoteScriptAddress() {
+		$this->enableTestDatabase();
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org'
+		);
+
+		$this->assertEquals(
+			'http://www.example.org',
+			$this->fixture->getBaseUrl()
+		);
+	}
+
+
+	/**
+	 * @test
+	 */
 	public function checkRequestAgainstThrottlingLimitsAddsCorrectEntryInTheLogTableOnPass() {
 		$db = $this->enableTestDatabase();
 
@@ -506,6 +541,29 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 			'quiz',
 			$this->fixture->getDatabaseName()
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	public function logVerificationLogsOneLinePerRun() {
+		$db = $this->enableTestDatabase();
+
+		$this->fixture->checkRequestAgainstThrottlingLimits(
+			'127.0.0.1',
+			'http://www.example.org/'
+		);
+
+		$this->fixture->logVerification(
+			'foo'
+		);
+
+		$dbResult = $db->query('SELECT COUNT(*) as count FROM logging WHERE source_ip="127.0.0.1" AND remote_url="http://www.example.org/" AND result="foo"')->fetch_assoc();
+
+		$this->assertEquals(
+			1,
+			$dbResult['count']
 		);
 	}
 

@@ -7,6 +7,11 @@ namespace Mrimann\RemoteScriptVerifier;
  */
 class Verifier {
 	/**
+	 * @var string the source IP address
+	 */
+	protected $sourceIpAddress;
+
+	/**
 	 * @var string the base URL
 	 */
 	protected $baseUrl = '';
@@ -161,6 +166,9 @@ class Verifier {
 	 * @param boolean whether to be verbose, defaults to FALSE
 	 */
 	public function checkRequestAgainstThrottlingLimits($sourceIpAddress, $remoteUrl, $beVerbose = FALSE) {
+		$this->setSourceIpAddress($sourceIpAddress);
+		$this->setBaseUrl($remoteUrl);
+
 		$dateLimit = new \DateTime('-1 hour');
 
 		$ipRes = $this->db->query('SELECT COUNT(*) as count FROM logging WHERE timestamp > "' . $dateLimit->format('Y-m-d H:i:s') . '" AND source_ip = "' . $this->db->escape_string($sourceIpAddress) . '"')->fetch_assoc();
@@ -187,6 +195,17 @@ class Verifier {
 	}
 
 	/**
+	 * Updates the existing log entry (from the throttling verification) with the
+	 * final result.
+	 *
+	 * @param string the result to be logged to the database
+	 */
+	public function logVerification($result) {
+		$this->db->query('UPDATE logging SET result="' . $result . '" WHERE source_ip="' . $this->db->escape_string($this->getSourceIpAddress()) .
+			'" AND remote_url="' . $this->db->escape_string($this->getBaseUrl()) . '" AND result="" LIMIT 1;');
+	}
+
+	/**
 	 * Stores the base URL
 	 *
 	 * @param string $url the URL to the remote script
@@ -203,6 +222,20 @@ class Verifier {
 	 */
 	public function getBaseUrl() {
 		return $this->baseUrl;
+	}
+
+	/**
+	 * @param string $sourceIpAddress
+	 */
+	public function setSourceIpAddress($sourceIpAddress) {
+		$this->sourceIpAddress = $sourceIpAddress;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSourceIpAddress() {
+		return $this->sourceIpAddress;
 	}
 
 	/**
