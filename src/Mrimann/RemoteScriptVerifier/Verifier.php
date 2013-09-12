@@ -199,10 +199,16 @@ class Verifier {
 	 * final result.
 	 *
 	 * @param string the result to be logged to the database
+	 * @param string the rawOutput of the tested script, optional, defaults to an empty string
 	 */
-	public function logVerification($result) {
-		$this->db->query('UPDATE logging SET result="' . $result . '" WHERE source_ip="' . $this->db->escape_string($this->getSourceIpAddress()) .
-			'" AND remote_url="' . $this->db->escape_string($this->getBaseUrl()) . '" AND result="" LIMIT 1;');
+	public function logVerification($result, $rawOutput = '') {
+		$this->db->query(
+			'UPDATE logging SET result="' . $result .
+				'", rawOutput="' . $this->db->escape_string($rawOutput) .
+				'" WHERE source_ip="' . $this->db->escape_string($this->getSourceIpAddress()) .
+				'" AND remote_url="' . $this->db->escape_string($this->getBaseUrl()) .
+				'" AND result="" LIMIT 1;'
+		);
 	}
 
 	/**
