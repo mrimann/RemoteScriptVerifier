@@ -2,6 +2,8 @@
 
 namespace Mrimann\RemoteScriptVerifier;
 
+use GuzzleHttp\Psr7\Response;
+
 /**
  * The central part of the whole remote script execution and verification.
  */
@@ -67,7 +69,7 @@ class Verifier {
 	/**
 	 * The Guzzle HTTP Client object
 	 *
-	 * @var \Guzzle\Http\Client
+	 * @var \GuzzleHttp\Client
 	 */
 	protected $httpClient;
 
@@ -90,7 +92,12 @@ class Verifier {
 		$this->setLimitBySourceIp(100);
 		$this->setLimitByRemoteUrl(100);
 
-		$this->httpClient = new \Guzzle\Http\Client($url);
+		$this->httpClient = new \GuzzleHttp\Client(array(
+				'base_uri' => $url,
+				'http_errors' => false
+			)
+		);
+
 		if ($url != '') {
 			$this->baseUrl = $url;
 		}
@@ -218,7 +225,6 @@ class Verifier {
 	 */
 	public function setBaseUrl($url) {
 		$this->baseUrl = $url;
-		$this->httpClient->setBaseUrl($url);
 	}
 
 	/**
@@ -304,21 +310,21 @@ class Verifier {
 	 * exceptions are disabled for the call!
 	 *
 	 * @param array $getParameters some GET parameters to be sent to the remote script
-	 * @return \Guzzle\Http\Message\Response the result of the HTTP request
+	 * @return \GuzzleHttp\Psr7\Response the result of the HTTP request
 	 */
 	public function fetchRemoteScript(array $getParameters) {
-		$request = $this->httpClient->get(
-			'?' . http_build_query($getParameters),
-			array(),
-			array('exceptions' => FALSE)
-		);
 		try {
-			$response = $request->send();
+			//$response = $request->send();
+			$response = $this->httpClient->request(
+				'GET',
+				$this->getBaseUrl() . '?' . http_build_query($getParameters),
+				array('http_errors' => false)
+			);
 		} catch(\Exception $e) {
 			$this->addNewFailedResult(
 				'Fetching the remote URL failed.'
 			);
-			$response = new \Guzzle\Http\Message\Response(
+			$response = new Response(
 				500
 			);
 		}
